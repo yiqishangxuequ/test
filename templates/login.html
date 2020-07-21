@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/html">
+<head>
+    <meta charset="UTF-8">
+    <title>登录</title>
+    <link rel="stylesheet" href="/static/bootstrap-3.3.7-dist/css/bootstrap.css">
+    <script src="/static/js/jquery-3.4.1.js"></script>
+</head>
+<body>
+<!--这是单行注释-->
+<!--
+    这是多行注释
+    这是多行注释
+    这是多行注释
+-->
+
+<!--
+div相当于盒子，即盒子套盒子
+container-fluid 流式布局，在手机和电脑上可以等比例缩放
+-->
+<div class="container-fluid">
+    <!--row表示用栅格-->
+    <div class="row">
+        <!--
+        // 开始分格子
+        // col-md-*中等屏幕 桌面显示器 (≥992px)(栅格参数).
+        //不管在哪种屏幕上，栅格系统都会自动的每行row分12列 col-xs-*和col-sm-* 和col-md-*后面跟的参数表示在当前的屏幕中 每个div所占列数。
+        //例如 <div class="col-xs-6 col-md-3"> 这个div在屏幕中占的位置是：
+        //col-xs-6 在超小屏幕中占6列 也就是屏幕的一半（12/6列=2个div） ，.col-md-3 在中单屏幕中占3列也就是1/4（12/3列=4个div）。
+
+        列偏移
+        使用.col-md-offset-*可以将列偏移到右侧。这些class通过使用*选择器将所有列增加了列的左侧margin。例如，
+        .col-md-offset-4将.col-md-4向右移动了4个列的宽度。
+
+        每行row分12列，col-md-6表示每个div所占列数为6，所以设置列偏移为3，可以把div置于页面中间
+        -->
+        <div class="col-md-6 col-md-offset-3">
+
+            <h1>登录</h1>
+            {% csrf_token %}
+            <!--生成隐藏的token，通过查看网页代码查看，然后我们拿这个token进行提交，如果不写则用ajax提交会报403错误-->
+                <!--form-group 增加块元素的下部留白或下部边界，从而使块元素的间距变大-->
+                <div class="form-group">
+                    <label for="id_name">用户名</label>
+                    <!--form-control实现换行-->
+                    <input type="text" name="name" id="id_name"  class="form-control">
+                </div>
+                <div class="form-group">
+                    <label for="id_pwd">密码</label>
+                    <input type="password" name="pwd" id="id_pwd" class="form-control">
+                </div>
+                <div class="form-group">
+                    <label for="id_code">验证码</label>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <input type="text" name="name" id="id_code" class="form-control">
+                        </div>
+                        <div class="col-md-6">
+                            <!--向/get_code/地址发请求-->
+                            <img src="/get_code/" height="40" width="350" id="id_img">
+                        </div>
+                    </div>
+                </div>
+                <!--class先用btn，再用btn-success -->
+                <input type="sumit" value="提交" class=" btn btn-success" id ="submit_btn"><span class="error" style="color: red"></span>
+
+        </div>
+    </div>
+
+</div>
+</body>
+<script>
+    $('#id_img').click(function(){
+        //alert(1)
+        //当图片地址发生变化，会自动去重新加载
+        $('#id_img')[0].src +='?'
+    })
+    $("#submit_btn").click(function(){
+        $.ajax({
+            url:'/login/',
+            type:'POST',
+            data:{
+                // 务必要添 #
+                name:$("#id_name").val(),
+                pwd:$("#id_pwd").val(),
+                code:$("#id_code").val(),
+                csrfmiddlewaretoken:'{{csrf_token}}'
+                //django的模板语言，把csrf_token的值渲染到这个位置，加''是为了变成字符串的形式
+                },
+
+            success:function(data){
+                //console.log(data)
+                //console.log(typeof data)
+                //console.log(data.msg)
+                //console.log(data.name)
+                //data.name无返回值，可见data.name没有name这个属性，所以此处的data仅仅是从视图函数中返回的data,
+                //而非ajax提交的data变量
+
+                if(data.code==100){
+                    //跳转
+                    //location.href ='/index/'
+                    location.href = data.url
+                }else{
+                        // 在提交按钮后显示验证结果
+                        // 由于唯一标示用的class，所以是 .error
+                        // 如果是用id，则是 #error
+                        //$(".error").html(data.msg)
+                        $(".error").text(data.msg)
+                }
+
+                }
+        })
+
+    })
+</script>
+</html>

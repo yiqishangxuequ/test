@@ -1,0 +1,30 @@
+{# 引进模板 #}
+{% extends 'base.html' %}
+{# 继续写引进模板的content块 #}
+{% block content %}
+      {% for article in article_list %}
+            {# pk和nid都可以表示主键 #}
+            <h4><a href="/{{ article.blog.userinfo.username }}/article/{{ article.pk }}">{{ article.title }}</a></h4>
+            <div class="media" style="margin-bottom: 5px">
+                <div class="media-left">
+                    <a href="#">
+                        <img class="media-object" src="/media/{{ article.blog.userinfo.avatar }}" height="60" width="60">
+                    </a>
+                </div>
+                <div class="media-body">
+                    {{ article.desc }}
+                </div>
+            </div>
+            <div class="bottom_article pull-right">
+                <span>post @</span>
+                {#给时间添加过滤器#}
+                <span>发布于 {{ article.create_time|date:'Y-m-d H:i' }}</span>
+                <span>{{ article.blog.userinfo.username }}</span>
+                {#<span>评论 ({{ article.commit_set.count }})</span>#}
+                {#直接在数据库中加入点赞数和点踩数之类的#}
+                <span  class="glyphicon glyphicon-comment">评论({{ article.commit_num }})</span>
+                <span class="glyphicon glyphicon-thumbs-up">点赞({{ article.up_num }})</span>
+
+            </div>
+        {% endfor %}
+{% endblock %}

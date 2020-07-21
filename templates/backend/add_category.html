@@ -1,0 +1,20 @@
+{% extends 'backend/backend_base.html' %}
+
+{% block content2 %}
+    <div>
+        <p>添加分类</p>
+        <form action="/add_category/" method="post">
+            {% csrf_token %}
+            <div class="form-group">
+                <label for="id_title">请输入要添加分类的名称</label>
+                <input type="text" name="category" id="id_category" class="form-control">
+            </div>
+                <button class="btn btn-success">添加</button>
+                {#直接写button会触发提交表单#}
+                {#<input type="submit">也会触发#}
+                {#但是 <input type="button">不会触发#}
+                {#ajax和form表单的提交会冲突#}
+            </p>
+        </form>
+    </div>
+{% endblock %}

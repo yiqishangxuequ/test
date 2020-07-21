@@ -1,0 +1,175 @@
+{% extends 'base.html' %}
+
+{% block mycss %}
+    <link rel="stylesheet" href="/static/css/commoncss.css">
+{% endblock %}
+
+
+{% block content %}
+    <div>
+        <h4>{{ article.title }}</h4>
+        <div>
+            {{ article.content|safe }}
+        </div>
+
+        {# bootstrap中的清除浮动类 #}
+        <div class="clearfix">
+            <div id="div_digg">
+            <div class="diggit upanddown">
+                <span class="diggnum" id="digg_count">{{ article.up_num }}</span>
+            </div>
+            <div class="buryit upanddwon" >
+                <span class="burynum" id="bury_count">{{ article.down_num }}</span>
+            </div>
+            <div class="clear"></div>
+            <div class="diggword" id="digg_tips" style="color: red;">
+
+            </div>
+        </div>
+        </div>
+        <div>
+        {#评论相关；这种注释是django的DTL模板语言注释#}
+        {#后端在对前段进行渲染的时候，会把这些话删除，所以前端看不到这些语句#}
+            <div>
+                {# 评论列表 #}
+                <p>评论列表</p>
+            <ul class="list-group commit_content">
+                {% for commit in article.commit_set.all %}
+                     <li class="list-group-item">
+                         <p>
+                            <span>#{{ forloop.counter }} 楼</span>
+                            <span>{{ commit.create_time|date:"Y-m-d H:i" }}</span>
+                            <span><a href="/{{ commit.user.username }}">{{ commit.user.username }}</a></span>
+                            <span class="pull-right reply" username="{{ commit.user.username }}" commit_id="{{ commit.pk }}"><a>回复</a></span>
+                            {# 这里不能令id=reply，因为在for循环中它们的id都会相同 #}
+                         </p>
+                        <p>
+                            {% if commit.parent %}
+                                <p class="well">@{{ commit.parent.user.username }}----{{ commit.parent.content }}</p>
+                            {% endif %}
+                            {{ commit.content }}
+                        </p>
+                     </li>
+
+                {% endfor %}
+            </ul>
+            </div>
+            <div>
+                {# 发表评论 #}
+                <p>发表评论</p>
+                <p>
+                    昵称：<input type="text" id="tbCommentAuthor" class="author" disabled="disabled" size="50" value="{{ request.user.username }}">
+                </p>
+                <p>评论内容</p>
+                <textarea name="" id="id_textarea" cols="80" rows="10">
+
+                </textarea>
+                <p><button class="btn btn-success" id="btn_submit">提交</button></p>
+            </div>
+        </div>
+
+
+    </div>
+
+<script>
+var parent_id=''
+{# 定义全局变量，设置为空，表示根评论，如果有值，则表示子评论#}
+
+    //评论相关
+    //$("#btn_submit")中的#号别忘记加
+    $("#btn_submit").click(function () {
+            var content = $('#id_textarea').val()
+
+            if(parent_id){
+                //有值，截取前面的@姓名
+                //indexof 截取 \n的索引位置
+                var index = content.indexOf('\n')+1
+                content= content.slice(index)
+            }
+
+        //谁对那篇文章评论了什么内容
+          $.ajax({
+            url: '/commit/',
+            type:'post',
+            data:{article_id:'{{ article.pk }}',content:content,csrfmiddlewaretoken:'{{csrf_token}}',parent_id:parent_id},
+            success:function (data) {
+                console.log(data)
+                //清除输入框的数据
+                $("#id_textarea").val("")
+                if(data.code==100){
+                    var username = data.username
+                    var reply_content = data.reply_content
+                    var parent_name = data.parent_name
+                    if (parent_id){
+
+                        var s = `
+                        <li class="list-group-item">
+                            <p>
+                                <span>${username}</span>
+                            </p>
+                              <p class="well">
+                                @${parent_name}
+                              </p>
+                            ${reply_content}
+                         </li>`
+
+
+                    }else{
+                         //往后追加内容
+                        //追加根评论内容
+                        //es6的字符串替换，用反双引号
+                        var username = data.username
+                        var reply_content = data.reply_content
+                        var s = `
+                        <li class="list-group-item">
+                             <p>
+                                <span>${username}</span>
+                            </p>
+                                ${reply_content}
+                        </li>`
+                    }
+
+                    $(".commit_content").append(s)
+                }
+            }
+        })
+    })
+
+    //回复相关
+    $(".reply").click(function () {
+        var username ='@'+$(this).attr('username')+'\n'
+        {# 这里是全局变量，定义在script标签的最上面 #}
+        parent_id = $(this).attr('commit_id')
+        console.log(parent_id)
+        //光标聚焦到该控件上
+        $("#id_textarea").focus()
+        $("#id_textarea").val(username)
+    })
+
+    //点赞相关
+    $(".upanddown").click(function(){
+        //当前点击控件有没有diggit这个类
+        var is_up = $(this).hasClass('diggit')
+        //拿到当前点击控件的子控件的span标签对象
+        var cu_span = $(this).children('span')
+
+        //alert(is_up)
+        $.ajax({
+            url: '/diggit/',
+            type:'post',
+            data:{article_id:'{{ article.pk }}',is_up:is_up,csrfmiddlewaretoken:'{{csrf_token}}'},
+            success:function (data) {
+                console.log(data)
+                $("digg_tips").html(data.msg)
+                if(data.code == 100) {
+                    {#cu_span.text(Number(cu_span.text()) + 1)#}
+                    cu_span.text(Number(cu_span.text()) + 1)
+                }
+            }
+        })
+    })
+
+</script>
+{% endblock %}
+
+
